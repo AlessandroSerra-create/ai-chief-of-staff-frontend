@@ -16,6 +16,46 @@ const KPI_COLS = [
   { label: "Riunioni",      key: "Reuniões agendadas" },
 ];
 
+function parseRowDate(dateStr: string): Date | null {
+  if (!dateStr || dateStr.trim() === "") return null;
+  // Support dd/mm/yyyy format
+  const parts = dateStr.trim().split("/");
+  if (parts.length === 3) {
+    const [dd, mm, yyyy] = parts;
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    if (!isNaN(d.getTime())) return d;
+  }
+  // Fallback: try native parsing
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function filterRowsByPeriod(rows: any[], period: TimeFilter): any[] {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  let from: Date;
+  switch (period) {
+    case "Oggi":
+      from = startOfToday;
+      break;
+    case "7 giorni":
+      from = new Date(startOfToday.getTime() - 6 * 86400000);
+      break;
+    case "30 giorni":
+      from = new Date(startOfToday.getTime() - 29 * 86400000);
+      break;
+    case "Mese":
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+  }
+
+  return rows.filter((r) => {
+    const d = parseRowDate(r.Data);
+    return d && d >= from && d <= now;
+  });
+}
+
 function sumCol(rows: any[], key: string): number {
   return rows.reduce((acc, r) => acc + (parseInt(r[key]) || 0), 0);
 }
@@ -35,8 +75,6 @@ function buildMetrics(rows: any[]) {
 }
 
 function buildDetailRows(rows: any[]) {
-  // Mostra le ultime 14 righe dove almeno un campo KPI è non-vuoto
-  // ("0" esplicito conta come dato, stringa vuota "" = riga pre-compilata senza dati)
   const withData = rows.filter((r) =>
     r.Data && r.Data.toString().trim() !== "" &&
     KPI_COLS.some(({ key }) => r[key] !== undefined && r[key] !== null && r[key].toString().trim() !== "")
@@ -69,11 +107,13 @@ export default function DashboardPage() {
   const [tab, setTab]               = useState<Tab>("KPI");
 
 
-  const [metrics, setMetrics]       = useState(METRICS_FALLBACK);
-  const [detailRows, setDetailRows] = useState<any[]>([]);
-  const [crmRows, setCrmRows]       = useState<any[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const [allKpiRows, setAllKpiRows]  = useState<any[]>([]);
+  const [metrics, setMetrics]        = useState(METRICS_FALLBACK);
+  const [detailRows, setDetailRows]  = useState<any[]>([]);
+  const [crmRows, setCrmRows]        = useState<any[]>([]);
+  const [loading, setLoading]        = useState(true);
 
+  // Fetch data once from Supabase
   useEffect(() => {
     async function fetchData() {
       const { data } = await supabase
@@ -86,25 +126,22 @@ export default function DashboardPage() {
 
       if (data?.payload) {
         const p = data.payload;
-
-        // KPI
-        const kpiRows: any[] = p.KPI?.rows ?? [];
-        if (kpiRows.length > 0) {
-          setMetrics(buildMetrics(kpiRows));
-          setDetailRows(buildDetailRows(kpiRows));
-        }
-
-        // CRM
-        const crm: any[] = p.CRM?.rows ?? [];
-        setCrmRows(crm);
-
-
+        setAllKpiRows(p.KPI?.rows ?? []);
+        setCrmRows(p.CRM?.rows ?? []);
       }
 
       setLoading(false);
     }
     fetchData();
   }, []);
+
+  // Recompute metrics when filter or data changes
+  useEffect(() => {
+    if (allKpiRows.length === 0) return;
+    const filtered = filterRowsByPeriod(allKpiRows, timeFilter);
+    setMetrics(filtered.length > 0 ? buildMetrics(filtered) : METRICS_FALLBACK);
+    setDetailRows(buildDetailRows(filtered));
+  }, [timeFilter, allKpiRows]);
 
   return (
     <div className="space-y-5">
