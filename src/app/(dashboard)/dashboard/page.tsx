@@ -1,11 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // ── Types ──────────────────────────────────────────────
+type TimeFilter = "Oggi" | "7 giorni" | "14 giorni" | "30 giorni" | "Tot";
 type Tab = "KPI" | "CRM";
+
+const TIME_FILTERS: TimeFilter[] = ["Oggi", "7 giorni", "14 giorni", "30 giorni", "Tot"];
+const DAYS_MAP: Record<TimeFilter, number | null> = {
+  "Oggi": 0, "7 giorni": 6, "14 giorni": 13, "30 giorni": 29, "Tot": null,
+};
+
+function parseRowDate(dateStr: string): Date | null {
+  if (!dateStr || dateStr.trim() === "") return null;
+  const parts = dateStr.trim().split("/");
+  if (parts.length === 3) {
+    const [dd, mm, yyyy] = parts;
+    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    if (!isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+function filterRows(rows: any[], period: TimeFilter): any[] {
+  const days = DAYS_MAP[period];
+  if (days === null) return rows;
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - days);
+  return rows.filter((r) => {
+    const d = parseRowDate(r.Data);
+    return d && d >= start && d <= now;
+  });
+}
 
 // ── KPI helpers ────────────────────────────────────────
 const KPI_COLS = [
@@ -61,10 +89,11 @@ const PROSPECT_BADGE: Record<string, string> = {
 
 // ── Component ──────────────────────────────────────────
 export default function DashboardPage() {
-  const [tab, setTab]         = useState<Tab>("KPI");
-  const [kpiRows, setKpiRows] = useState<any[]>([]);
-  const [crmRows, setCrmRows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("30 giorni");
+  const [tab, setTab]               = useState<Tab>("KPI");
+  const [allKpiRows, setAllKpiRows] = useState<any[]>([]);
+  const [crmRows, setCrmRows]       = useState<any[]>([]);
+  const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -78,7 +107,7 @@ export default function DashboardPage() {
 
       if (data?.payload) {
         const p = data.payload;
-        setKpiRows(p.KPI?.rows ?? []);
+        setAllKpiRows(p.KPI?.rows ?? []);
         setCrmRows(p.CRM?.rows ?? []);
       }
 
@@ -87,15 +116,28 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  const metrics    = buildMetrics(kpiRows);
-  const detailRows = buildDetailRows(kpiRows);
+  const filtered   = useMemo(() => filterRows(allKpiRows, timeFilter), [allKpiRows, timeFilter]);
+  const metrics    = useMemo(() => buildMetrics(filtered), [filtered]);
+  const detailRows = useMemo(() => buildDetailRows(filtered), [filtered]);
 
   return (
     <div className="space-y-5">
       {/* ── Header ── */}
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
-        <p className="text-xs text-gray-400 mt-1">Dati aggiornati ogni ora &middot; Ultimi 10 giorni</p>
+        <div className="flex items-center gap-1 bg-white rounded-lg p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          {TIME_FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setTimeFilter(f)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                timeFilter === f ? "bg-[#3B5BF6] text-white" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Tab navigation ── */}
