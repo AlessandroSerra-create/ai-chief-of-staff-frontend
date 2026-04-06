@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // ── Types ──────────────────────────────────────────────
-type TimeFilter = "Oggi" | "7 giorni" | "30 giorni" | "Mese";
+type TimeFilter = "7 giorni" | "30 giorni" | "Tutto";
 type Tab = "KPI" | "CRM";
+
+const TIME_FILTERS: TimeFilter[] = ["7 giorni", "30 giorni", "Tutto"];
 
 // ── KPI helpers ────────────────────────────────────────
 const KPI_COLS = [
@@ -18,36 +20,27 @@ const KPI_COLS = [
 
 function parseRowDate(dateStr: string): Date | null {
   if (!dateStr || dateStr.trim() === "") return null;
-  // Support dd/mm/yyyy format
   const parts = dateStr.trim().split("/");
   if (parts.length === 3) {
     const [dd, mm, yyyy] = parts;
     const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
     if (!isNaN(d.getTime())) return d;
   }
-  // Fallback: try native parsing
   const d = new Date(dateStr);
   return isNaN(d.getTime()) ? null : d;
 }
 
 function filterRowsByPeriod(rows: any[], period: TimeFilter): any[] {
+  if (period === "Tutto") return rows;
+
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   let from: Date;
-  switch (period) {
-    case "Oggi":
-      from = startOfToday;
-      break;
-    case "7 giorni":
-      from = new Date(startOfToday.getTime() - 6 * 86400000);
-      break;
-    case "30 giorni":
-      from = new Date(startOfToday.getTime() - 29 * 86400000);
-      break;
-    case "Mese":
-      from = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
+  if (period === "7 giorni") {
+    from = new Date(startOfToday.getTime() - 6 * 86400000);
+  } else {
+    from = new Date(startOfToday.getTime() - 29 * 86400000);
   }
 
   return rows.filter((r) => {
@@ -60,13 +53,20 @@ function sumCol(rows: any[], key: string): number {
   return rows.reduce((acc, r) => acc + (parseInt(r[key]) || 0), 0);
 }
 
-function buildMetrics(rows: any[]) {
-  const filled = rows.filter((r) =>
+function computeMetrics(allRows: any[], period: TimeFilter) {
+  const rows = filterRowsByPeriod(allRows, period);
+  const filled = rows.filter((r: any) =>
     KPI_COLS.some(({ key }) => r[key] && r[key].toString().trim() !== "" && r[key].toString().trim() !== "0")
   );
+
+  if (filled.length === 0) {
+    return KPI_COLS.map(({ label }) => ({ label, value: 0, trend: 0 }));
+  }
+
   const mid = Math.floor(filled.length / 2);
   const recent = filled.slice(mid);
   const previous = filled.slice(0, mid);
+
   return KPI_COLS.map(({ label, key }) => ({
     label,
     value: sumCol(filled, key),
@@ -74,8 +74,9 @@ function buildMetrics(rows: any[]) {
   }));
 }
 
-function buildDetailRows(rows: any[]) {
-  const withData = rows.filter((r) =>
+function computeDetailRows(allRows: any[], period: TimeFilter) {
+  const rows = filterRowsByPeriod(allRows, period);
+  const withData = rows.filter((r: any) =>
     r.Data && r.Data.toString().trim() !== "" &&
     KPI_COLS.some(({ key }) => r[key] !== undefined && r[key] !== null && r[key].toString().trim() !== "")
   );
@@ -94,24 +95,14 @@ const PROSPECT_BADGE: Record<string, string> = {
   Contattato: "bg-emerald-50 text-emerald-600",
 };
 
-const METRICS_FALLBACK = [
-  { label: "Email inviate", value: 0, trend: 0 },
-  { label: "Follow-up",     value: 0, trend: 0 },
-  { label: "Risposte",      value: 0, trend: 0 },
-  { label: "Riunioni",      value: 0, trend: 0 },
-];
-
 // ── Component ──────────────────────────────────────────
 export default function DashboardPage() {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("7 giorni");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("30 giorni");
   const [tab, setTab]               = useState<Tab>("KPI");
+  const [allKpiRows, setAllKpiRows] = useState<any[]>([]);
+  const [crmRows, setCrmRows]       = useState<any[]>([]);
+  const [loading, setLoading]       = useState(true);
 
-
-  const [allKpiRows, setAllKpiRows]  = useState<any[]>([]);
-  const [crmRows, setCrmRows]        = useState<any[]>([]);
-  const [loading, setLoading]        = useState(true);
-
-  // Fetch data once from Supabase
   useEffect(() => {
     async function fetchData() {
       const { data } = await supabase
@@ -133,19 +124,9 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  // Derive metrics and detail rows synchronously from state
-  const filteredRows = useMemo(
-    () => filterRowsByPeriod(allKpiRows, timeFilter),
-    [allKpiRows, timeFilter]
-  );
-  const metrics = useMemo(
-    () => (filteredRows.length > 0 ? buildMetrics(filteredRows) : METRICS_FALLBACK),
-    [filteredRows]
-  );
-  const detailRows = useMemo(
-    () => buildDetailRows(filteredRows),
-    [filteredRows]
-  );
+  // ── Compute directly every render — no caching, no stale data ──
+  const metrics    = computeMetrics(allKpiRows, timeFilter);
+  const detailRows = computeDetailRows(allKpiRows, timeFilter);
 
   return (
     <div className="space-y-5">
@@ -153,7 +134,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
         <div className="flex items-center gap-1 bg-white rounded-lg p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          {(["Oggi", "7 giorni", "30 giorni", "Mese"] as TimeFilter[]).map((f) => (
+          {TIME_FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => setTimeFilter(f)}
