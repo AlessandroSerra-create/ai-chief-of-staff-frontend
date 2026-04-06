@@ -1,16 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    router.push("/dashboard");
+    setError("");
+    setLoading(true);
+
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    setLoading(false);
+
+    if (res?.error) {
+      setError("Credenziali non valide. Riprova.");
+    } else {
+      window.location.href = "/dashboard";
+    }
   }
 
   return (
@@ -83,12 +99,18 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Error */}
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
+
             {/* Submit */}
             <button
               type="submit"
-              className="w-full h-12 bg-[#3B5BF6] text-white font-semibold rounded-lg hover:bg-[#2f4de0] transition-colors"
+              disabled={loading}
+              className="w-full h-12 bg-[#3B5BF6] text-white font-semibold rounded-lg hover:bg-[#2f4de0] transition-colors disabled:opacity-50"
             >
-              Accedi
+              {loading ? "Accesso in corso..." : "Accedi"}
             </button>
           </form>
 
