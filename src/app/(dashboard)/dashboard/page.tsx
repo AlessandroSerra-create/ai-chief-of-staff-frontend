@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -108,8 +108,6 @@ export default function DashboardPage() {
 
 
   const [allKpiRows, setAllKpiRows]  = useState<any[]>([]);
-  const [metrics, setMetrics]        = useState(METRICS_FALLBACK);
-  const [detailRows, setDetailRows]  = useState<any[]>([]);
   const [crmRows, setCrmRows]        = useState<any[]>([]);
   const [loading, setLoading]        = useState(true);
 
@@ -135,13 +133,19 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  // Recompute metrics when filter or data changes
-  useEffect(() => {
-    if (allKpiRows.length === 0) return;
-    const filtered = filterRowsByPeriod(allKpiRows, timeFilter);
-    setMetrics(filtered.length > 0 ? buildMetrics(filtered) : METRICS_FALLBACK);
-    setDetailRows(buildDetailRows(filtered));
-  }, [timeFilter, allKpiRows]);
+  // Derive metrics and detail rows synchronously from state
+  const filteredRows = useMemo(
+    () => filterRowsByPeriod(allKpiRows, timeFilter),
+    [allKpiRows, timeFilter]
+  );
+  const metrics = useMemo(
+    () => (filteredRows.length > 0 ? buildMetrics(filteredRows) : METRICS_FALLBACK),
+    [filteredRows]
+  );
+  const detailRows = useMemo(
+    () => buildDetailRows(filteredRows),
+    [filteredRows]
+  );
 
   return (
     <div className="space-y-5">
