@@ -5,10 +5,7 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // ── Types ──────────────────────────────────────────────
-type TimeFilter = "7 giorni" | "30 giorni" | "Tutto";
 type Tab = "KPI" | "CRM";
-
-const TIME_FILTERS: TimeFilter[] = ["7 giorni", "30 giorni", "Tutto"];
 
 // ── KPI helpers ────────────────────────────────────────
 const KPI_COLS = [
@@ -18,43 +15,11 @@ const KPI_COLS = [
   { label: "Riunioni",      key: "Reuniões agendadas" },
 ];
 
-function parseRowDate(dateStr: string): Date | null {
-  if (!dateStr || dateStr.trim() === "") return null;
-  const parts = dateStr.trim().split("/");
-  if (parts.length === 3) {
-    const [dd, mm, yyyy] = parts;
-    const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-    if (!isNaN(d.getTime())) return d;
-  }
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function filterRowsByPeriod(rows: any[], period: TimeFilter): any[] {
-  if (period === "Tutto") return rows;
-
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  let from: Date;
-  if (period === "7 giorni") {
-    from = new Date(startOfToday.getTime() - 6 * 86400000);
-  } else {
-    from = new Date(startOfToday.getTime() - 29 * 86400000);
-  }
-
-  return rows.filter((r) => {
-    const d = parseRowDate(r.Data);
-    return d && d >= from && d <= now;
-  });
-}
-
 function sumCol(rows: any[], key: string): number {
   return rows.reduce((acc, r) => acc + (parseInt(r[key]) || 0), 0);
 }
 
-function computeMetrics(allRows: any[], period: TimeFilter) {
-  const rows = filterRowsByPeriod(allRows, period);
+function buildMetrics(rows: any[]) {
   const filled = rows.filter((r: any) =>
     KPI_COLS.some(({ key }) => r[key] && r[key].toString().trim() !== "" && r[key].toString().trim() !== "0")
   );
@@ -74,8 +39,7 @@ function computeMetrics(allRows: any[], period: TimeFilter) {
   }));
 }
 
-function computeDetailRows(allRows: any[], period: TimeFilter) {
-  const rows = filterRowsByPeriod(allRows, period);
+function buildDetailRows(rows: any[]) {
   const withData = rows.filter((r: any) =>
     r.Data && r.Data.toString().trim() !== "" &&
     KPI_COLS.some(({ key }) => r[key] !== undefined && r[key] !== null && r[key].toString().trim() !== "")
@@ -97,11 +61,10 @@ const PROSPECT_BADGE: Record<string, string> = {
 
 // ── Component ──────────────────────────────────────────
 export default function DashboardPage() {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("30 giorni");
-  const [tab, setTab]               = useState<Tab>("KPI");
-  const [allKpiRows, setAllKpiRows] = useState<any[]>([]);
-  const [crmRows, setCrmRows]       = useState<any[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const [tab, setTab]         = useState<Tab>("KPI");
+  const [kpiRows, setKpiRows] = useState<any[]>([]);
+  const [crmRows, setCrmRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -115,7 +78,7 @@ export default function DashboardPage() {
 
       if (data?.payload) {
         const p = data.payload;
-        setAllKpiRows(p.KPI?.rows ?? []);
+        setKpiRows(p.KPI?.rows ?? []);
         setCrmRows(p.CRM?.rows ?? []);
       }
 
@@ -124,28 +87,15 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  // ── Compute directly every render — no caching, no stale data ──
-  const metrics    = computeMetrics(allKpiRows, timeFilter);
-  const detailRows = computeDetailRows(allKpiRows, timeFilter);
+  const metrics    = buildMetrics(kpiRows);
+  const detailRows = buildDetailRows(kpiRows);
 
   return (
     <div className="space-y-5">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between">
+      <div>
         <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
-        <div className="flex items-center gap-1 bg-white rounded-lg p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          {TIME_FILTERS.map((f) => (
-            <button
-              key={f}
-              onClick={() => setTimeFilter(f)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                timeFilter === f ? "bg-[#3B5BF6] text-white" : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
+        <p className="text-xs text-gray-400 mt-1">Dati aggiornati ogni ora &middot; Ultimi 10 giorni</p>
       </div>
 
       {/* ── Tab navigation ── */}
