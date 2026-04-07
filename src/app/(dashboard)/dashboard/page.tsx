@@ -105,6 +105,8 @@ export default function DashboardPage() {
         .limit(1)
         .single();
 
+      console.log("canonical_data payload:", data?.payload);
+
       if (data?.payload) {
         const p = data.payload;
         setAllKpiRows(p.KPI?.rows ?? []);
