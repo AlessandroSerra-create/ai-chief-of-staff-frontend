@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useLingua } from "@/lib/lingua-context";
+import { t } from "@/lib/i18n";
 
 type TimeFilter = "Oggi" | "7 giorni" | "14 giorni" | "30 giorni" | "Tot";
 type Tab = "KPI" | "CRM" | "Finanziario" | "Ordini";
@@ -40,10 +42,10 @@ function filterRows(rows: any[], period: TimeFilter): any[] {
 }
 
 const KPI_COLS = [
-  { label: "Email inviate", key: "Novos e-mails enviados" },
-  { label: "Follow-up",     key: "Follow-ups enviados" },
-  { label: "Risposte",      key: "Respostas recebidas" },
-  { label: "Riunioni",      key: "Reuniões agendadas" },
+  { labelKey: "emailInviate" as const, key: "Novos e-mails enviados" },
+  { labelKey: "followUp" as const,     key: "Follow-ups enviados" },
+  { labelKey: "risposte" as const,     key: "Respostas recebidas" },
+  { labelKey: "riunioni" as const,     key: "Reuniões agendadas" },
 ];
 
 function sumCol(rows: any[], key: string): number {
@@ -55,13 +57,13 @@ function buildMetrics(rows: any[]) {
     KPI_COLS.some(({ key }) => r[key] && r[key].toString().trim() !== "" && r[key].toString().trim() !== "0")
   );
   if (filled.length === 0) {
-    return KPI_COLS.map(({ label }) => ({ label, value: 0, trend: 0 }));
+    return KPI_COLS.map(({ labelKey }) => ({ labelKey, value: 0, trend: 0 }));
   }
   const mid = Math.floor(filled.length / 2);
   const recent = filled.slice(mid);
   const previous = filled.slice(0, mid);
-  return KPI_COLS.map(({ label, key }) => ({
-    label,
+  return KPI_COLS.map(({ labelKey, key }) => ({
+    labelKey,
     value: sumCol(filled, key),
     trend: sumCol(recent, key) - sumCol(previous, key),
   }));
@@ -81,6 +83,7 @@ export default function DashboardPage() {
   const [allKpiRows, setAllKpiRows] = useState<any[]>([]);
   const [crmRows, setCrmRows]       = useState<any[]>([]);
   const [loading, setLoading]       = useState(true);
+  const { lingua } = useLingua();
 
   useEffect(() => {
     async function fetchData() {
@@ -110,7 +113,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-lg font-bold text-gray-900">{t(lingua, "dashboard")}</h1>
         <div className="flex items-center gap-1 bg-white rounded-lg p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
           {TIME_FILTERS.map((f) => (
             <button
@@ -127,16 +130,16 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex gap-6 border-b border-[#EEEEEE]">
-        {(["KPI", "CRM", "Finanziario", "Ordini"] as Tab[]).map((t) => (
+        {(["KPI", "CRM", "Finanziario", "Ordini"] as Tab[]).map((tb) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tb}
+            onClick={() => setTab(tb)}
             className={`pb-3 text-sm font-medium transition-colors relative ${
-              tab === t ? "text-[#3B5BF6]" : "text-gray-400 hover:text-gray-600"
+              tab === tb ? "text-[#3B5BF6]" : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            {t}
-            {tab === t && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#3B5BF6] rounded-full" />}
+            {tb}
+            {tab === tb && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#3B5BF6] rounded-full" />}
           </button>
         ))}
       </div>
@@ -147,15 +150,15 @@ export default function DashboardPage() {
             {metrics.map((m) => {
               const positive = m.trend >= 0;
               return (
-                <div key={m.label} className="bg-white rounded-xl p-5" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-                  <p className="text-xs text-gray-400 font-medium mb-3">{m.label}</p>
+                <div key={m.labelKey} className="bg-white rounded-xl p-5" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+                  <p className="text-xs text-gray-400 font-medium mb-3">{t(lingua, m.labelKey)}</p>
                   <p className="text-3xl font-bold text-gray-900 mb-2">
                     {loading ? <span className="animate-pulse text-gray-200">—</span> : m.value}
                   </p>
                   <div className="flex items-center gap-1">
                     {positive ? <TrendingUp size={13} className="text-emerald-500" /> : <TrendingDown size={13} className="text-red-400" />}
                     <span className={`text-xs font-medium ${positive ? "text-emerald-500" : "text-red-400"}`}>
-                      {positive ? "+" : ""}{m.trend} vs periodo prec.
+                      {positive ? "+" : ""}{m.trend} {t(lingua, "vsPeriodoPrec")}
                     </span>
                   </div>
                 </div>
@@ -165,21 +168,21 @@ export default function DashboardPage() {
 
           <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
             <div className="px-6 py-4 border-b border-[#EEEEEE]">
-              <h2 className="font-semibold text-gray-900 text-sm">Dettaglio giornaliero</h2>
+              <h2 className="font-semibold text-gray-900 text-sm">{t(lingua, "dettaglioGiornaliero")}</h2>
             </div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[#F5F6FA]">
-                  {["Data", "Email", "Follow-up", "Risposte", "Stato"].map((h) => (
+                  {[t(lingua, "data"), "Email", t(lingua, "followUp"), t(lingua, "risposte"), t(lingua, "stato")].map((h) => (
                     <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={5} className="px-6 py-6 text-xs text-gray-300 text-center">Caricamento...</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-6 text-xs text-gray-300 text-center">{t(lingua, "caricamento")}</td></tr>
                 ) : detailRows.length === 0 ? (
-                  <tr><td colSpan={5} className="px-6 py-6 text-xs text-gray-300 text-center">Nessun dato disponibile</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-6 text-xs text-gray-300 text-center">{t(lingua, "nessunDato")}</td></tr>
                 ) : detailRows.map((row, i) => {
                   const val = (k: string) => row[k]?.toString().trim() ?? "";
                   const email    = val("Novos e-mails enviados");
@@ -199,11 +202,11 @@ export default function DashboardPage() {
                       <td className="px-6 py-3.5">
                         {ok ? (
                           <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 text-xs font-medium px-2 py-0.5 rounded-full">
-                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />Compilato
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />{t(lingua, "compilato")}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 bg-red-50 text-red-500 text-xs font-medium px-2 py-0.5 rounded-full">
-                            <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />Non compilato
+                            <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />{t(lingua, "nonCompilato")}
                           </span>
                         )}
                       </td>
@@ -219,21 +222,21 @@ export default function DashboardPage() {
       {tab === "CRM" && (
         <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
           <div className="px-6 py-4 border-b border-[#EEEEEE]">
-            <h2 className="font-semibold text-gray-900 text-sm">Aziende CRM</h2>
+            <h2 className="font-semibold text-gray-900 text-sm">{t(lingua, "aziendecrm")}</h2>
           </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-[#F5F6FA]">
-                {["Azienda", "Ultima nota", "Ultimo contatto"].map((h) => (
+                {[t(lingua, "azienda"), t(lingua, "ultimaNota"), t(lingua, "ultimoContatto")].map((h) => (
                   <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={3} className="px-6 py-6 text-xs text-gray-300 text-center">Caricamento...</td></tr>
+                <tr><td colSpan={3} className="px-6 py-6 text-xs text-gray-300 text-center">{t(lingua, "caricamento")}</td></tr>
               ) : crmRows.length === 0 ? (
-                <tr><td colSpan={3} className="px-6 py-6 text-xs text-gray-300 text-center">Nessun dato CRM</td></tr>
+                <tr><td colSpan={3} className="px-6 py-6 text-xs text-gray-300 text-center">{t(lingua, "nessunoDateCRM")}</td></tr>
               ) : crmRows.map((row, i) => (
                 <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#FAFAFA]"}>
                   <td className="px-6 py-3.5 text-xs font-semibold text-gray-800">{row["Nome da empresa"] ?? "—"}</td>
@@ -253,8 +256,8 @@ export default function DashboardPage() {
               <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
           </div>
-          <p className="text-sm font-semibold text-gray-700 mb-1">Sezione Finanziario</p>
-          <p className="text-xs text-gray-400 max-w-xs">Collegamento al Google Sheet finanziario in arrivo. Visualizzerà KPI finanziari, margini e trend mensili.</p>
+          <p className="text-sm font-semibold text-gray-700 mb-1">{t(lingua, "sezFinanziario")}</p>
+          <p className="text-xs text-gray-400 max-w-xs">{t(lingua, "sezFinanziarioDesc")}</p>
         </div>
       )}
 
@@ -265,8 +268,8 @@ export default function DashboardPage() {
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
             </svg>
           </div>
-          <p className="text-sm font-semibold text-gray-700 mb-1">Sezione Ordini</p>
-          <p className="text-xs text-gray-400 max-w-xs">Collegamento a Webmais ERP in arrivo. Visualizzerà nuovi ordini, ordini completati e ritardi nei pagamenti.</p>
+          <p className="text-sm font-semibold text-gray-700 mb-1">{t(lingua, "sezOrdini")}</p>
+          <p className="text-xs text-gray-400 max-w-xs">{t(lingua, "sezOrdiniDesc")}</p>
         </div>
       )}
 
