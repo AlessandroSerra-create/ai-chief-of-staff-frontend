@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Plus, MessageSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import ReactMarkdown from "react-markdown";
+import { useLingua } from "@/lib/lingua-context";
+import { t } from "@/lib/i18n";
 
 type Messaggio = { ruolo: "utente" | "ai"; testo: string };
 type Conversazione = { id: string; titolo: string; created_at: string };
@@ -18,6 +20,7 @@ export default function ChatPage() {
   const [reportData, setReportData] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { lingua } = useLingua();
 
   useEffect(() => {
     async function fetchReport() {
@@ -131,13 +134,13 @@ export default function ChatPage() {
             className="w-full flex items-center justify-center gap-2 bg-[#3B5BF6] text-white text-xs font-semibold px-4 py-2.5 rounded-lg hover:bg-[#2f4de0] transition-colors"
           >
             <Plus size={14} />
-            Nuova conversazione
+            {t(lingua, "nuovaConversazione")}
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto py-2">
           {conversazioni.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center mt-8 px-4">Nessuna conversazione salvata</p>
+            <p className="text-xs text-gray-400 text-center mt-8 px-4">{t(lingua, "nessunaConversazione")}</p>
           ) : (
             conversazioni.map((c) => {
               const isAttiva = convAttiva === c.id;
@@ -171,13 +174,13 @@ export default function ChatPage() {
           <div>
             <h2 className="font-semibold text-gray-900 text-sm">AI Chief of Staff</h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              {loading ? "Caricamento contesto..." : reportTesto ? "Report caricato — pronto a rispondere" : "Nessun report disponibile"}
+              {loading ? t(lingua, "caricamentoContesto") : reportTesto ? t(lingua, "reportCaricato") : t(lingua, "nessunoReport")}
             </p>
           </div>
           {oraBadge && (
             <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-medium px-2.5 py-1 rounded-full">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-              Report {oraBadge}
+              {t(lingua, "report")} {oraBadge}
             </span>
           )}
         </div>
@@ -189,9 +192,9 @@ export default function ChatPage() {
               <div className="w-12 h-12 bg-[#EEF1FF] rounded-full flex items-center justify-center mb-4">
                 <Send size={20} className="text-[#3B5BF6]" />
               </div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Chiedimi qualsiasi cosa</p>
+              <p className="text-sm font-medium text-gray-700 mb-1">{t(lingua, "chiedimi")}</p>
               <p className="text-xs text-gray-400 max-w-sm">
-                Ho accesso all&apos;ultimo report aziendale con dati KPI, CRM, prospect e comunicazioni email.
+                {t(lingua, "chiedimDesc")}
               </p>
             </div>
           )}
@@ -247,7 +250,7 @@ export default function ChatPage() {
                 inviaMessaggio(e as any);
               }
             }}
-            placeholder="Scrivi un messaggio..."
+            placeholder={t(lingua, "scrivi")}
             disabled={caricamento}
             className="flex-1 text-sm bg-[#F5F6FA] rounded-lg px-4 py-2.5 outline-none placeholder-gray-400 text-gray-900 disabled:opacity-50"
           />
@@ -257,7 +260,7 @@ export default function ChatPage() {
             className="flex items-center gap-2 bg-[#3B5BF6] text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-[#2f4de0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send size={14} />
-            Invia
+            {t(lingua, "invia")}
           </button>
         </form>
       </div>
