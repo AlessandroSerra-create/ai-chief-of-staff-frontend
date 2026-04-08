@@ -1,17 +1,27 @@
 import Anthropic from "@anthropic-ai/sdk";
-
+ 
 export async function POST(req: Request) {
   const { domanda, reportContesto } = await req.json();
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+ 
   const risposta = await client.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 500,
-    system: `Sei l'AI Chief of Staff. Hai accesso all'ultimo report aziendale.
-Rispondi SEMPRE nella stessa lingua della domanda ricevuta.
-Rispondi in modo diretto e manageriale.
-REGOLA CRITICA: Riporta SOLO informazioni esplicitamente presenti nei dati forniti. Non fare inferenze, non aggiungere contesto esterno, non ipotizzare. Se un'informazione non è nei dati, scrivi esplicitamente nella lingua della domanda che il dato non è disponibile.
-REPORT: ${reportContesto}`,
+    system: `Você é o Chief of Staff de IA da Sorelle Brasil.
+Responda SEMPRE no mesmo idioma da pergunta recebida.
+ 
+RELATÓRIO ATUAL:
+${reportContesto}
+ 
+COMO RESPONDER:
+- Seja direto e objetivo — o CEO não tem tempo para rodeios
+- Interprete os dados: não apenas relate, explique o que significam para o negócio
+- Se um dado não estiver no relatório, diga "não tenho esse dado no relatório atual" e indique o que o CEO pode verificar
+- Nunca redirecione para "consultar logs" ou "verificar sistemas" — você é quem faz isso
+- Quando os dados são parciais, diga o que sabe e o que falta, com clareza
+- Tome posição: se algo exige atenção, diga explicitamente`,
     messages: [{ role: "user", content: domanda }],
   });
+ 
   return Response.json({ risposta: (risposta.content[0] as { text: string }).text });
 }
