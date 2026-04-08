@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useLingua } from "@/lib/lingua-context";
+import { t } from "@/lib/i18n";
 
 const FOCUS_TAGS = [
   "Pipeline commerciale",
@@ -13,9 +15,9 @@ const FOCUS_TAGS = [
 ];
 
 const FREQUENZE = [
-  { label: "Ogni ora", note: "consigliato" },
-  { label: "Ogni 3 ore", note: "" },
-  { label: "Una volta al giorno", note: "" },
+  { label: "Ogni ora", consigliato: true },
+  { label: "Ogni 3 ore", consigliato: false },
+  { label: "Una volta al giorno", consigliato: false },
 ];
 
 const DEFAULT_FOCUS = ["Pipeline commerciale", "KPI attività giornaliere", "Prospect BRA"];
@@ -26,6 +28,7 @@ export default function ImpostazioniPage() {
   const [frequenza, setFrequenza]   = useState("Ogni ora");
   const [salvato, setSalvato]       = useState(false);
   const [salvando, setSalvando]     = useState(false);
+  const { lingua } = useLingua();
 
   useEffect(() => {
     async function caricaConfig() {
@@ -67,28 +70,28 @@ export default function ImpostazioniPage() {
     <div className="max-w-2xl space-y-8">
       <div className="bg-white rounded-xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
         <div className="flex items-start justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-900">Azienda</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t(lingua, "azienda")}</h2>
           <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-medium px-2.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-            Attivo
+            {t(lingua, "attivo")}
           </span>
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <p className="text-xs text-gray-400 w-20">Nome</p>
+            <p className="text-xs text-gray-400 w-20">{t(lingua, "nome")}</p>
             <p className="text-sm font-semibold text-gray-900">Sorelle Industria e Comercio LTDA</p>
           </div>
           <div className="flex items-center gap-3">
-            <p className="text-xs text-gray-400 w-20">Settore</p>
+            <p className="text-xs text-gray-400 w-20">{t(lingua, "settore")}</p>
             <p className="text-sm text-gray-600">Aloe vera / Prodotti</p>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-        <h2 className="text-sm font-semibold text-gray-900 mb-1">Focus del report</h2>
+        <h2 className="text-sm font-semibold text-gray-900 mb-1">{t(lingua, "focusReport")}</h2>
         <p className="text-xs text-gray-400 mb-5">
-          Seleziona le aree che il sistema deve monitorare con priorità
+          {t(lingua, "focusDesc")}
         </p>
         <div className="flex flex-wrap gap-2">
           {FOCUS_TAGS.map((tag) => {
@@ -112,10 +115,10 @@ export default function ImpostazioniPage() {
 
       <div className="bg-white rounded-xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
         <label className="block text-sm font-semibold text-gray-900 mb-1">
-          Istruzione personalizzata al CEO
+          {t(lingua, "istruzioneCustom")}
         </label>
         <p className="text-xs text-gray-400 mb-4">
-          Aggiungi contesto o focus specifico per la generazione del report
+          {t(lingua, "istruzioneDesc")}
         </p>
         <textarea
           rows={4}
@@ -127,7 +130,7 @@ export default function ImpostazioniPage() {
       </div>
 
       <div className="bg-white rounded-xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-        <h2 className="text-sm font-semibold text-gray-900 mb-4">Frequenza report</h2>
+        <h2 className="text-sm font-semibold text-gray-900 mb-4">{t(lingua, "frequenzaReport")}</h2>
         <div className="flex gap-3">
           {FREQUENZE.map((f) => {
             const active = frequenza === f.label;
@@ -142,9 +145,9 @@ export default function ImpostazioniPage() {
                 <p className={`text-sm font-semibold ${active ? "text-[#3B5BF6]" : "text-gray-700"}`}>
                   {f.label}
                 </p>
-                {f.note && (
+                {f.consigliato && (
                   <p className={`text-xs mt-0.5 ${active ? "text-[#3B5BF6] opacity-70" : "text-gray-400"}`}>
-                    {f.note}
+                    {t(lingua, "consigliato")}
                   </p>
                 )}
               </button>
@@ -163,10 +166,10 @@ export default function ImpostazioniPage() {
               : "bg-[#3B5BF6] text-white hover:bg-[#2f4de0] disabled:opacity-60"
           }`}
         >
-          {salvato ? "✓ Configurazione salvata" : salvando ? "Salvataggio..." : "Salva configurazione"}
+          {salvato ? t(lingua, "salvato") : salvando ? t(lingua, "salvando") : t(lingua, "salva")}
         </button>
         <p className="text-center text-xs text-gray-400 mt-3">
-          Le modifiche saranno applicate al prossimo ciclo di generazione
+          {t(lingua, "modificheApplicate")}
         </p>
       </div>
     </div>
