@@ -101,6 +101,7 @@ export default function DashboardPage() {
         .from("canonical_data")
         .select("payload")
         .eq("cliente", "aloe-vera-pilot")
+        .is("fonte", null)
         .order("creato_at", { ascending: false })
         .limit(1)
         .single();
