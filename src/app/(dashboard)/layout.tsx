@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Settings } from "lucide-react";
+import { LinguaProvider, useLingua } from "@/lib/lingua-context";
+import { t } from "@/lib/i18n";
 
 function IconChat({ className }: { className?: string }) {
   return (
@@ -22,25 +24,26 @@ function IconDatabase({ className }: { className?: string }) {
   );
 }
 
-const NAV_ITEMS = [
-  { icon: IconChat, label: "Chat AI", href: "/chat" },
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: IconDatabase, label: "Fonti", href: "/fonti" },
-];
-
-const PAGE_TITLES: Record<string, string> = {
-  "/chat": "Chat AI",
-  "/dashboard": "Dashboard",
-  "/fonti": "Fonti dati",
-  "/impostazioni": "Impostazioni",
-};
-
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function LayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [active, setActive] = useState(pathname);
+  const { lingua, setLingua } = useLingua();
 
-  const pageTitle = PAGE_TITLES[active] ?? "Dashboard";
+  const NAV_ITEMS = [
+    { icon: IconChat, label: t(lingua, "chat"), href: "/chat" },
+    { icon: LayoutDashboard, label: t(lingua, "dashboard"), href: "/dashboard" },
+    { icon: IconDatabase, label: t(lingua, "fonti"), href: "/fonti" },
+  ];
+
+  const PAGE_TITLES: Record<string, string> = {
+    "/chat": t(lingua, "chat"),
+    "/dashboard": t(lingua, "dashboard"),
+    "/fonti": t(lingua, "fonti"),
+    "/impostazioni": t(lingua, "impostazioni"),
+  };
+
+  const pageTitle = PAGE_TITLES[active] ?? t(lingua, "dashboard");
 
   function navigate(href: string) {
     setActive(href);
@@ -76,7 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex flex-col items-center gap-3">
           <button
             onClick={() => navigate("/impostazioni")}
-            title="Impostazioni"
+            title={t(lingua, "impostazioni")}
             className={`relative w-full flex items-center justify-center h-11 transition-colors ${
               active === "/impostazioni" ? "bg-[#EEF1FF]" : "hover:bg-gray-50"
             }`}
@@ -96,11 +99,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 bg-[#F5F6FA] flex items-center px-6 shrink-0 border-b border-[#EEEEEE]">
+        <header className="h-14 bg-[#F5F6FA] flex items-center justify-between px-6 shrink-0 border-b border-[#EEEEEE]">
           <h1 className="font-semibold text-gray-900 text-base">{pageTitle}</h1>
+          <button
+            onClick={() => setLingua(lingua === "it" ? "pt" : "it")}
+            className="flex items-center gap-1.5 bg-white border border-[#EEEEEE] rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-[#3B5BF6] hover:text-[#3B5BF6] transition-colors"
+          >
+            {lingua === "it" ? "🇧🇷 PT" : "🇮🇹 IT"}
+          </button>
         </header>
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <LinguaProvider>
+      <LayoutInner>{children}</LayoutInner>
+    </LinguaProvider>
   );
 }

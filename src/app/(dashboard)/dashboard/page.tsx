@@ -28,6 +28,11 @@ function filterRows(rows: any[], period: TimeFilter): any[] {
   if (days === null) return rows;
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - days);
+  // Per "Oggi" usiamo solo il confronto sulla data stringa, non sull'orario
+  if (days === 0) {
+    const todayStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+    return rows.filter((r) => r.Data?.trim() === todayStr);
+  }
   return rows.filter((r) => {
     const d = parseRowDate(r.Data);
     return d && d >= start && d <= now;
