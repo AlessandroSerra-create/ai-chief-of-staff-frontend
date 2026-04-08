@@ -87,8 +87,22 @@ const FONTI: Fonte[] = [
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Caselle collegate</p>
         <div className="space-y-2">
           {[
-            "contato@sorelleindustria.com.br",
-            "vendas@sorelleindustria.com.br",
+            "serra@sorellebrasil.com",
+            "producao@sorellebrasil.com",
+            "incardona@sorellebrasil.com",
+            "dscottini@sorellebrasil.com",
+            "vendas@sorellebrasil.com",
+            "gilvolpato@sorellebrasil.com",
+            "j.werlich@sorellebrasil.com",
+            "qualidade@sorellebrasil.com",
+            "pcp@sorellebrasil.com",
+            "lucac@sorellebrasil.com",
+            "financeiro@sorellebrasil.com",
+            "laboratorio@sorellebrasil.com",
+            "sorelle@sorellebrasil.com",
+            "u.garanhani@sorellebrasil.com",
+            "valerio@sorellebrasil.com",
+            "compras@sorellebrasil.com",
           ].map((email) => (
             <div key={email} className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0">
               <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
