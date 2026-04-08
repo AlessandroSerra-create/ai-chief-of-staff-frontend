@@ -25,7 +25,7 @@ export default function LoginPage() {
     if (res?.error) {
       setError("Credenziali non valide. Riprova.");
     } else {
-      window.location.href = "/dashboard";
+      window.location.href = "/chat";
     }
   }
 

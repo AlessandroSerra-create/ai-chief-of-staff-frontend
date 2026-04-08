@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FileText, Settings, Search, Bell } from "lucide-react";
+import { LayoutDashboard, Settings, Search, Bell } from "lucide-react";
 
 // SVG inline per icone non disponibili nella versione installata di lucide-react
 function IconChat({ className }: { className?: string }) {
@@ -33,17 +33,15 @@ function IconDatabase({ className }: { className?: string }) {
 }
 
 const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: FileText, label: "Report", href: "/report" },
   { icon: IconChat, label: "Chat AI", href: "/chat" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: IconTask, label: "Task", href: "/task" },
   { icon: IconDatabase, label: "Fonti", href: "/fonti" },
 ];
 
 const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/report": "Report",
   "/chat": "Chat AI",
+  "/dashboard": "Dashboard",
   "/task": "Task",
   "/fonti": "Fonti dati",
   "/impostazioni": "Impostazioni",
