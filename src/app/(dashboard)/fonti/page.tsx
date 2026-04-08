@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useLingua } from "@/lib/lingua-context";
+import { t } from "@/lib/i18n";
 
 type StatoFonte = "Attivo" | "In attesa" | "Errore";
 
@@ -49,84 +51,6 @@ function IconChevron({ open }: { open: boolean }) {
   );
 }
 
-const FONTI: Fonte[] = [
-  {
-    id: "gsheet",
-    nome: "Google Sheet",
-    stato: "Attivo",
-    icon: <IconSheet />,
-    dettaglio: (
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Documenti collegati</p>
-        <div className="space-y-2">
-          {[
-            { nome: "KPI + CRM — Pamela", fogli: ["KPI", "CRM", "BRA", "ARG"] },
-            { nome: "Documento 2", fogli: ["—"] },
-            { nome: "Documento 3", fogli: ["—"] },
-          ].map((doc) => (
-            <div key={doc.nome} className="flex items-start justify-between py-2 border-b border-gray-100 last:border-0">
-              <p className="text-sm text-gray-700 font-medium">{doc.nome}</p>
-              <div className="flex gap-1 flex-wrap justify-end">
-                {doc.fogli.map((f) => (
-                  <span key={f} className="text-xs bg-[#EEF1FF] text-[#3B5BF6] px-2 py-0.5 rounded-full font-medium">{f}</span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "gmail",
-    nome: "Gmail",
-    stato: "Attivo",
-    icon: <IconMail />,
-    dettaglio: (
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Caselle collegate</p>
-        <div className="space-y-2">
-          {[
-            "serra@sorellebrasil.com",
-            "producao@sorellebrasil.com",
-            "incardona@sorellebrasil.com",
-            "dscottini@sorellebrasil.com",
-            "vendas@sorellebrasil.com",
-            "gilvolpato@sorellebrasil.com",
-            "j.werlich@sorellebrasil.com",
-            "qualidade@sorellebrasil.com",
-            "pcp@sorellebrasil.com",
-            "lucac@sorellebrasil.com",
-            "financeiro@sorellebrasil.com",
-            "laboratorio@sorellebrasil.com",
-            "sorelle@sorellebrasil.com",
-            "u.garanhani@sorellebrasil.com",
-            "valerio@sorellebrasil.com",
-            "compras@sorellebrasil.com",
-          ].map((email) => (
-            <div key={email} className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
-              <p className="text-sm text-gray-700">{email}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "webmais",
-    nome: "Webmais ERP",
-    stato: "In attesa",
-    icon: <IconDB />,
-    dettaglio: (
-      <div className="space-y-2">
-        <p className="text-sm text-gray-500">Integrazione prevista nella Fase 2 del progetto.</p>
-        <p className="text-xs text-gray-400">Nessuna connessione attiva al momento.</p>
-      </div>
-    ),
-  },
-];
-
 const STATO_STYLE: Record<StatoFonte, string> = {
   Attivo:      "bg-emerald-50 text-emerald-600",
   Errore:      "bg-red-50 text-red-500",
@@ -139,16 +63,101 @@ const STATO_DOT: Record<StatoFonte, string> = {
   "In attesa": "bg-amber-400",
 };
 
+const STATO_LABEL_KEY: Record<StatoFonte, "attivo" | "inAttesa" | "errore"> = {
+  Attivo:      "attivo",
+  "In attesa": "inAttesa",
+  Errore:      "errore",
+};
+
 export default function FontiPage() {
   const [aperta, setAperta] = useState<string | null>(null);
+  const { lingua } = useLingua();
 
   function toggle(id: string) {
     setAperta((prev) => (prev === id ? null : id));
   }
 
+  const FONTI: Fonte[] = [
+    {
+      id: "gsheet",
+      nome: "Google Sheet",
+      stato: "Attivo",
+      icon: <IconSheet />,
+      dettaglio: (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t(lingua, "documentiCollegati")}</p>
+          <div className="space-y-2">
+            {[
+              { nome: "KPI + CRM — Pamela", fogli: ["KPI", "CRM", "BRA", "ARG"] },
+              { nome: "Documento 2", fogli: ["—"] },
+              { nome: "Documento 3", fogli: ["—"] },
+            ].map((doc) => (
+              <div key={doc.nome} className="flex items-start justify-between py-2 border-b border-gray-100 last:border-0">
+                <p className="text-sm text-gray-700 font-medium">{doc.nome}</p>
+                <div className="flex gap-1 flex-wrap justify-end">
+                  {doc.fogli.map((f) => (
+                    <span key={f} className="text-xs bg-[#EEF1FF] text-[#3B5BF6] px-2 py-0.5 rounded-full font-medium">{f}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "gmail",
+      nome: "Gmail",
+      stato: "Attivo",
+      icon: <IconMail />,
+      dettaglio: (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t(lingua, "caselleCollegate")}</p>
+          <div className="space-y-2">
+            {[
+              "serra@sorellebrasil.com",
+              "producao@sorellebrasil.com",
+              "incardona@sorellebrasil.com",
+              "dscottini@sorellebrasil.com",
+              "vendas@sorellebrasil.com",
+              "gilvolpato@sorellebrasil.com",
+              "j.werlich@sorellebrasil.com",
+              "qualidade@sorellebrasil.com",
+              "pcp@sorellebrasil.com",
+              "lucac@sorellebrasil.com",
+              "financeiro@sorellebrasil.com",
+              "laboratorio@sorellebrasil.com",
+              "sorelle@sorellebrasil.com",
+              "u.garanhani@sorellebrasil.com",
+              "valerio@sorellebrasil.com",
+              "compras@sorellebrasil.com",
+            ].map((email) => (
+              <div key={email} className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
+                <p className="text-sm text-gray-700">{email}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "webmais",
+      nome: "Webmais ERP",
+      stato: "In attesa",
+      icon: <IconDB />,
+      dettaglio: (
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500">{t(lingua, "integrazioneFase2")}</p>
+          <p className="text-xs text-gray-400">{t(lingua, "nessunaConnessione")}</p>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="max-w-2xl space-y-4">
-      <h2 className="text-base font-semibold text-gray-900 mb-2">Fonti dati</h2>
+      <h2 className="text-base font-semibold text-gray-900 mb-2">{t(lingua, "fontiDati")}</h2>
 
       {FONTI.map((f) => {
         const isOpen = aperta === f.id;
@@ -171,7 +180,7 @@ export default function FontiPage() {
               <div className="flex items-center gap-3">
                 <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${STATO_STYLE[f.stato]}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${STATO_DOT[f.stato]}`} />
-                  {f.stato}
+                  {t(lingua, STATO_LABEL_KEY[f.stato])}
                 </span>
                 <IconChevron open={isOpen} />
               </div>
