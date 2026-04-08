@@ -1,7 +1,10 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function TaskPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Task</h1>
-    </div>
-  );
+  const router = useRouter();
+  useEffect(() => { router.replace("/dashboard"); }, [router]);
+  return null;
 }

@@ -4,9 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-// ── Types ──────────────────────────────────────────────
 type TimeFilter = "Oggi" | "7 giorni" | "14 giorni" | "30 giorni" | "Tot";
-type Tab = "KPI" | "CRM";
+type Tab = "KPI" | "CRM" | "Finanziario" | "Ordini";
 
 const TIME_FILTERS: TimeFilter[] = ["Oggi", "7 giorni", "14 giorni", "30 giorni", "Tot"];
 const DAYS_MAP: Record<TimeFilter, number | null> = {
@@ -35,7 +34,6 @@ function filterRows(rows: any[], period: TimeFilter): any[] {
   });
 }
 
-// ── KPI helpers ────────────────────────────────────────
 const KPI_COLS = [
   { label: "Email inviate", key: "Novos e-mails enviados" },
   { label: "Follow-up",     key: "Follow-ups enviados" },
@@ -51,15 +49,12 @@ function buildMetrics(rows: any[]) {
   const filled = rows.filter((r: any) =>
     KPI_COLS.some(({ key }) => r[key] && r[key].toString().trim() !== "" && r[key].toString().trim() !== "0")
   );
-
   if (filled.length === 0) {
     return KPI_COLS.map(({ label }) => ({ label, value: 0, trend: 0 }));
   }
-
   const mid = Math.floor(filled.length / 2);
   const recent = filled.slice(mid);
   const previous = filled.slice(0, mid);
-
   return KPI_COLS.map(({ label, key }) => ({
     label,
     value: sumCol(filled, key),
@@ -75,19 +70,6 @@ function buildDetailRows(rows: any[]) {
   return withData.slice(-14).reverse();
 }
 
-// ── Helpers UI ─────────────────────────────────────────
-const CRM_BADGE: Record<string, string> = {
-  Attivo:   "bg-emerald-50 text-emerald-600",
-  Proposta: "bg-[#EEF1FF] text-[#3B5BF6]",
-  Freddo:   "bg-gray-100 text-gray-500",
-};
-
-const PROSPECT_BADGE: Record<string, string> = {
-  Novo:       "bg-[#EEF1FF] text-[#3B5BF6]",
-  Contattato: "bg-emerald-50 text-emerald-600",
-};
-
-// ── Component ──────────────────────────────────────────
 export default function DashboardPage() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("30 giorni");
   const [tab, setTab]               = useState<Tab>("KPI");
@@ -106,14 +88,11 @@ export default function DashboardPage() {
         .limit(1)
         .single();
 
-      console.log("canonical_data payload:", data?.payload);
-
       if (data?.payload) {
         const p = data.payload;
         setAllKpiRows(p.KPI?.rows ?? []);
         setCrmRows(p.CRM?.rows ?? []);
       }
-
       setLoading(false);
     }
     fetchData();
@@ -125,7 +104,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5">
-      {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
         <div className="flex items-center gap-1 bg-white rounded-lg p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
@@ -143,9 +121,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Tab navigation ── */}
       <div className="flex gap-6 border-b border-[#EEEEEE]">
-        {(["KPI", "CRM"] as Tab[]).map((t) => (
+        {(["KPI", "CRM", "Finanziario", "Ordini"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -159,10 +136,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* ── TAB: KPI ── */}
       {tab === "KPI" && (
         <div className="space-y-5">
-          {/* Metric cards */}
           <div className="grid grid-cols-4 gap-4">
             {metrics.map((m) => {
               const positive = m.trend >= 0;
@@ -183,7 +158,6 @@ export default function DashboardPage() {
             })}
           </div>
 
-          {/* Tabella dettaglio giornaliero */}
           <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
             <div className="px-6 py-4 border-b border-[#EEEEEE]">
               <h2 className="font-semibold text-gray-900 text-sm">Dettaglio giornaliero</h2>
@@ -237,7 +211,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── TAB: CRM ── */}
       {tab === "CRM" && (
         <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
           <div className="px-6 py-4 border-b border-[#EEEEEE]">
@@ -265,6 +238,30 @@ export default function DashboardPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {tab === "Finanziario" && (
+        <div className="bg-white rounded-xl p-10 flex flex-col items-center justify-center text-center" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+          <div className="w-12 h-12 bg-[#EEF1FF] rounded-xl flex items-center justify-center mb-4">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B5BF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-gray-700 mb-1">Sezione Finanziario</p>
+          <p className="text-xs text-gray-400 max-w-xs">Collegamento al Google Sheet finanziario in arrivo. Visualizzerà KPI finanziari, margini e trend mensili.</p>
+        </div>
+      )}
+
+      {tab === "Ordini" && (
+        <div className="bg-white rounded-xl p-10 flex flex-col items-center justify-center text-center" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+          <div className="w-12 h-12 bg-[#EEF1FF] rounded-xl flex items-center justify-center mb-4">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B5BF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-gray-700 mb-1">Sezione Ordini</p>
+          <p className="text-xs text-gray-400 max-w-xs">Collegamento a Webmais ERP in arrivo. Visualizzerà nuovi ordini, ordini completati e ritardi nei pagamenti.</p>
         </div>
       )}
 

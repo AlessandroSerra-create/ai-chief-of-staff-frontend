@@ -10,7 +10,6 @@ const FOCUS_TAGS = [
   "Prospect ARG",
   "Alert compilazione dati",
   "Analisi email",
-  "Conversazioni WhatsApp",
 ];
 
 const FREQUENZE = [
@@ -22,11 +21,11 @@ const FREQUENZE = [
 const DEFAULT_FOCUS = ["Pipeline commerciale", "KPI attività giornaliere", "Prospect BRA"];
 
 export default function ImpostazioniPage() {
-  const [focus, setFocus]         = useState<string[]>(DEFAULT_FOCUS);
+  const [focus, setFocus]           = useState<string[]>(DEFAULT_FOCUS);
   const [istruzione, setIstruzione] = useState("");
-  const [frequenza, setFrequenza] = useState("Ogni ora");
-  const [salvato, setSalvato]     = useState(false);
-  const [salvando, setSalvando]   = useState(false);
+  const [frequenza, setFrequenza]   = useState("Ogni ora");
+  const [salvato, setSalvato]       = useState(false);
+  const [salvando, setSalvando]     = useState(false);
 
   useEffect(() => {
     async function caricaConfig() {
@@ -66,7 +65,6 @@ export default function ImpostazioniPage() {
 
   return (
     <div className="max-w-2xl space-y-8">
-      {/* ── Sezione 1: Azienda ── */}
       <div className="bg-white rounded-xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-900">Azienda</h2>
@@ -78,20 +76,15 @@ export default function ImpostazioniPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <p className="text-xs text-gray-400 w-20">Nome</p>
-            <p className="text-sm font-semibold text-gray-900">Aloe Brasil</p>
+            <p className="text-sm font-semibold text-gray-900">Sorelle Industria e Comercio LTDA</p>
           </div>
           <div className="flex items-center gap-3">
             <p className="text-xs text-gray-400 w-20">Settore</p>
             <p className="text-sm text-gray-600">Aloe vera / Prodotti</p>
           </div>
-          <div className="flex items-center gap-3">
-            <p className="text-xs text-gray-400 w-20">Mercati</p>
-            <p className="text-sm text-gray-600">BRA + ARG</p>
-          </div>
         </div>
       </div>
 
-      {/* ── Sezione 2: Focus del report ── */}
       <div className="bg-white rounded-xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
         <h2 className="text-sm font-semibold text-gray-900 mb-1">Focus del report</h2>
         <p className="text-xs text-gray-400 mb-5">
@@ -117,7 +110,6 @@ export default function ImpostazioniPage() {
         </div>
       </div>
 
-      {/* ── Sezione 3: Istruzione personalizzata ── */}
       <div className="bg-white rounded-xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
         <label className="block text-sm font-semibold text-gray-900 mb-1">
           Istruzione personalizzata al CEO
@@ -134,7 +126,6 @@ export default function ImpostazioniPage() {
         />
       </div>
 
-      {/* ── Sezione 4: Frequenza report ── */}
       <div className="bg-white rounded-xl p-6" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
         <h2 className="text-sm font-semibold text-gray-900 mb-4">Frequenza report</h2>
         <div className="flex gap-3">
@@ -162,7 +153,6 @@ export default function ImpostazioniPage() {
         </div>
       </div>
 
-      {/* ── Bottone salva ── */}
       <div>
         <button
           onClick={salvaConfigurazione}
