@@ -8,6 +8,7 @@ import { t } from "@/lib/i18n";
 
 type TimeFilter = "Oggi" | "7 giorni" | "14 giorni" | "30 giorni" | "Tot";
 type Tab = "KPI" | "CRM" | "Finanziario" | "Ordini";
+type Commerciale = "pamela" | "dante";
 
 const TIME_FILTERS: TimeFilter[] = ["Oggi", "7 giorni", "14 giorni", "30 giorni", "Tot"];
 const DAYS_MAP: Record<TimeFilter, number | null> = {
@@ -30,7 +31,6 @@ function filterRows(rows: any[], period: TimeFilter): any[] {
   if (days === null) return rows;
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - days);
-  // Per "Oggi" usiamo solo il confronto sulla data stringa, non sull'orario
   if (days === 0) {
     const todayStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
     return rows.filter((r) => r.Data?.trim() === todayStr);
@@ -78,19 +78,21 @@ function buildDetailRows(rows: any[]) {
 }
 
 export default function DashboardPage() {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("30 giorni");
-  const [tab, setTab]               = useState<Tab>("KPI");
-  const [allKpiRows, setAllKpiRows] = useState<any[]>([]);
-  const [crmRows, setCrmRows]       = useState<any[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const [timeFilter, setTimeFilter]   = useState<TimeFilter>("30 giorni");
+  const [tab, setTab]                 = useState<Tab>("KPI");
+  const [commerciale, setCommerciale] = useState<Commerciale>("pamela");
+  const [allKpiRows, setAllKpiRows]   = useState<any[]>([]);
+  const [crmRows, setCrmRows]         = useState<any[]>([]);
+  const [loading, setLoading]         = useState(true);
   const { lingua } = useLingua();
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       const { data } = await supabase
         .from("canonical_data")
         .select("payload")
-        .eq("cliente", "aloe-vera-pilot")
+        .eq("cliente", `aloe-vera-pilot-${commerciale}`)
         .is("fonte", null)
         .order("creato_at", { ascending: false })
         .limit(1)
@@ -100,11 +102,14 @@ export default function DashboardPage() {
         const p = data.payload;
         setAllKpiRows(p.KPI?.rows ?? []);
         setCrmRows(p.CRM?.rows ?? []);
+      } else {
+        setAllKpiRows([]);
+        setCrmRows([]);
       }
       setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [commerciale]);
 
   const filtered   = useMemo(() => filterRows(allKpiRows, timeFilter), [allKpiRows, timeFilter]);
   const metrics    = useMemo(() => buildMetrics(filtered), [filtered]);
@@ -113,7 +118,24 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-gray-900">{t(lingua, "dashboard")}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-lg font-bold text-gray-900">{t(lingua, "dashboard")}</h1>
+          <div className="flex items-center gap-1 bg-[#F5F6FA] rounded-lg p-1">
+            {(["pamela", "dante"] as Commerciale[]).map((c) => (
+              <button
+                key={c}
+                onClick={() => setCommerciale(c)}
+                className={`px-3 py-1 rounded-md text-xs font-semibold capitalize transition-colors ${
+                  commerciale === c
+                    ? "bg-white text-[#3B5BF6] shadow-sm"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-1 bg-white rounded-lg p-1" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
           {TIME_FILTERS.map((f) => (
             <button
@@ -265,7 +287,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl p-10 flex flex-col items-center justify-center text-center" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
           <div className="w-12 h-12 bg-[#EEF1FF] rounded-xl flex items-center justify-center mb-4">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B5BF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y6="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
             </svg>
           </div>
           <p className="text-sm font-semibold text-gray-700 mb-1">{t(lingua, "sezOrdini")}</p>
