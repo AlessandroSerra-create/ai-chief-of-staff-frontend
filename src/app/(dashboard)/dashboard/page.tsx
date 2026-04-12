@@ -287,7 +287,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl p-10 flex flex-col items-center justify-center text-center" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
           <div className="w-12 h-12 bg-[#EEF1FF] rounded-xl flex items-center justify-center mb-4">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B5BF6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y6="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
             </svg>
           </div>
           <p className="text-sm font-semibold text-gray-700 mb-1">{t(lingua, "sezOrdini")}</p>
